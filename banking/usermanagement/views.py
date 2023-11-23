@@ -70,11 +70,6 @@ class ListView(generics.ListAPIView):
         print(response_data)             
         return Response(response_data,status=status.HTTP_200_OK)
            
-          
-        #    result = User.objects.all()  
-        #    serializers = UserSerializer(result, many=True)  
-        #    return Response({'status': 'success', "students":serializers.data}, status=200) 
-    
 class ManagerView(generics.ListAPIView):
     permission_classes=[IsAuthenticated,ManagerHandling] 
 
