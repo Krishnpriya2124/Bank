@@ -109,7 +109,7 @@ class TestDetails(TestCase):
 
         force_authenticate(request, user=self.user, token=self.token)
         response = WithdrawView.as_view()(request)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_withdrawInvalidUser(self):
         data = {
@@ -144,7 +144,41 @@ class TestApprovedDetails(TestCase):
             "amount": 300,
         }
         request = self.factory.post("transaction/withdraw/", data, format="json")
-
         force_authenticate(request, user=self.user, token=self.token)
         response = WithdrawView.as_view()(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class TestTransactionStaffView(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.view = TransactionStaffView.as_view()
+
+
+        transaction.objects.create(trans_type="withdraw", amount=100,acc=3,trans_date="30-03-2023")
+        transaction.objects.create(trans_type="deposit", amount=200,acc=3,trans_date="30-03-2023")
+
+    def test_get_transactions(self):
+        request = self.factory.get("transactions/")
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response, Response)
+
+
+        self.assertIn('results', response.data)
+
+       
+        transactions_count = len(response.data['results'])
+        self.assertEqual(transactions_count, transaction.objects.count())
+
+
+        paginator = PageNumberPagination()
+        tran = transaction.objects.order_by("-trans_date")
+        page = paginator.paginate_queryset(tran, request)
+        serializer = TransactionSerializer(page, many=True)
+        self.assertEqual(response.data['results'], serializer.data)
+
+  

@@ -1,11 +1,13 @@
 from django.test import TestCase
 from rest_framework.test import APIRequestFactory
-from .views import CreateAccount, PendingAccounts, CloseAccount, AccountApproval
+from .views import CreateAccount, PendingAccounts, CloseAccount, AccountApproval,AccountDetails
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework.test import force_authenticate
 from .models import Account
+from usermanagement.models import User
+from .serializers import AccountSerializer
 
 User = get_user_model()
 
@@ -156,4 +158,48 @@ class TestAcccountApproval(TestCase):
         response = view(request, id)
         print(response)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+class AccountViewTest(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.view = AccountDetails.as_view()
+        self.user = User.objects.create(username="test_user")
+        self.account = Account.objects.create(user=self.user,acc_no='1234')
+       
+    def test_get_method(self):
+    
+        request = self.factory.get('accountdetails/')
+        request.user = self.user  
+
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+
+class YourViewTest(TestCase):
+    def setUp(self):
+        self.factory = APIRequestFactory()
+        self.view = AccountDetails.as_view()
+        self.user = User.objects.create(username="test_user")
+        self.token = Token.objects.create(user=self.user)
+        self.acc_no='132132'
+        self.account = Account.objects.create(user=self.user,acc_no=self.acc_no)
+
+    def test_get_method_with_token_authentication(self):
+       
+        request = self.factory.get('accountdetails/')
+        request.user = self.user
+        request.META['HTTP_AUTHORIZATION'] = f'Token {self.token.key}'  
+        response = self.view(request)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('status', response.data)
+        self.assertIn('customer', response.data)
+        serialized_data = AccountSerializer(self.account).data
+        self.assertEqual(response.data['customer'], serialized_data)
+
+       
+
+
 

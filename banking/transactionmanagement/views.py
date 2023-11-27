@@ -13,9 +13,6 @@ from rest_framework import generics
 from usermanagement.models import User
 from rest_framework.pagination import PageNumberPagination
 
-
-
-
 class DepositView(APIView):
     permission_classes = [IsAuthenticated, TransactionHandling]
 
@@ -23,7 +20,6 @@ class DepositView(APIView):
         userid = request.user.id
         try:
             account = Account.objects.get(user=userid)
-
             deposit_amount = int(request.data.get("amount", 0))
             if account.acc_status == "approved":
                 if deposit_amount > 0:
@@ -56,11 +52,9 @@ class WithdrawView(APIView):
         userid = request.user.id
         try:
             account = Account.objects.get(user=userid)
-
             account = Account.objects.get(user=userid)
             withdraw_amount = int(request.data.get("amount", 0.0))
-
-            if account.acc_status == "approved":
+            if account.acc_status == "approved" :
                 if account.acc_balance > withdraw_amount:
                     account.acc_balance = account.acc_balance - withdraw_amount
                     account.save()
